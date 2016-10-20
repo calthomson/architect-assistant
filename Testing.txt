@@ -1,0 +1,18 @@
+WALL TEST CASES
+
+INVALID WALLS:
+3 ?- wall((1,2,3),(50,2)).
+false.
+
+4 ?- wall((1,2),(1,2)).
+false.
+
+5 ?- wall((1,2),(1,cat)).
+false.
+
+VALID WALLS:
+6 ?- wall((1,2),(2,4)).
+true.
+
+7 ?- wall((-1,2),(2,-4)).
+true.
