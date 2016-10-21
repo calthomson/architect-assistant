@@ -1,13 +1,13 @@
 WALL TEST CASES
 
-INVALID WALLS:
+// INVALID WALLS:
 3 ?- wall((1,2,3),(50,2)).
 false.
 
 4 ?- wall((1,2),(1,2)).
 false.
 
-5 ?- wall((1,2),(1,cat)).
+5 ?- wall((1,2),(1,sheep)).
 false.
 
 VALID WALLS:
@@ -16,3 +16,31 @@ true.
 
 7 ?- wall((-1,2),(2,-4)).
 true.
+
+// ROOM TEST CASES
+
+// VALID ROOM:
+// All walls are connected and first wall is connected to last
+1 ?- room([((1,1),(2,2)),((2,2),(3,3)),((3,3),(1,1))]).
+true .
+
+INVALID ROOMS:
+// 3rd wall not connected to 2nd
+2 ?- room([((1,1),(2,2)),((2,2),(3,3)),((4,4),(1,1))]).
+false.
+
+// Last wall not connected to 1st
+3 ?- room([((1,1),(2,2)),((2,2),(3,3)),((3,3),(4,4))]).
+false.
+
+// Last wall is not a valid wall
+4 ?- room([((1,1),(2,2)),((2,2),(3,3)),((3,3),(cat,1))]).
+false.
+
+// Last wall is not a valid wall
+5 ?- room([((1,1),(2,2)),((2,2),(3,3)),((3,3),(1,1,1))]).
+false.
+
+// Less than 3 walls
+6 ?- room([((1,1),(2,2)),((2,2),(3,3))]).
+false.
