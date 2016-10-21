@@ -1,0 +1,33 @@
+[(master_bedroom, type, room),
+ (master_bedroom, walls, [((1,1),(2,2)),((2,2),(3,3)),((3,3),(1,1))])])
+
+// USER INPUT / DATA
+ prop(master_bedroom, type, bedroom).
+ prop(master_bedroom, walls, [((1,1),(2,2)),()()()]).
+
+//////////////////////////
+valid(X) :- prop(X,type, Y), valid(X, Y).
+
+valid(X, room) :- prop(X, walls, R), room(R).
+valid(X,type, light-unindustrial) :- prop(X,area,A), A<2000.
+prop(X, type, room) :- prop(X,type, bedroom)
+:-bathroom ...
+
+prop(X,area,A):- prop(X,walls, R), area(R,A).
+
+prop(X,area,A):- p(X, type, building), getrooms(X, LR), areafromlist(LR,A) 
+
+
+? - valid(master_bedroom, type, room).
+
+? - valid(m_b).
+	Y= room 
+
+	valid(m_b, room).
+
+
+
+
+[househelper].
+
+? valid(m_b, type, bedroom).
