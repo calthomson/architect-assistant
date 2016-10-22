@@ -29,42 +29,60 @@ connectedFirstLast(((X1,Y1),_), [((X2,Y2),(X1,Y1))]) :- number(X2), number(Y2), 
 % Loop: Iterate through the list of walls until we reach the last wall so that we may compare it to the first
 connectedFirstLast(F, [_|T]) :- connectedFirstLast(F,T).
 
-% TODO: Not complete
-% room(R, type, T) returns true when room size S is the size of room R
-% example user input: prop(R1, roomtype, bedroom)
-% example user input: prop(R1, sqftsize, 200)
-% room(R, sqftsize, S) :- roomsize(R, S).
-% room(R, roomtype, bedroom) :- room(R, sqftsize, 100).
 
-%TODO check validity of X against a list of types
-valid(X) :- setof(T, prop(X,type, T), TL). %, validListOfTypes(X,TL).
+% Valid(X) gets the set of all types that the object is claimed to be a type of (including subtype / supertype relations that we define )
+% And then checks that the object is a valid member of each of those types.
+valid(X) :- setof(T, prop(X,type, T), TL),  validListOfTypes(X,TL).
+validListOfTypes(X, [H|T]) :- valid(X, type, H), validListOfTypes(X, T).
+validListOfTypes(X, [H]) :- valid(X, type, H). 
+
+% Valid(X, type, house) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
+valid(X, type, house):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
+validRooms([R|RL]) :- valid(R), validRooms(RL).
+validRooms([R]):- valid(R).
 
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
-valid(X,type, bedroom) :- prop(X,area,A), A<2000.
+valid(X,type, bedroom) :- hasdoor(X), haswindow(X).
+
+haswindow(_).
+hasdoor(_).
 prop(X, type, room) :- prop(X,type, bedroom).
 
-
+ 
 prop(X,area,A):- prop(X,walls, R), area(R,A).
 prop(X, type, room) :- prop(X,type, bedroom).
-prop(X, type, superroom) :- prop(X, type, room).
+
+
+
+
 
 %%%%%%% user data %%%%%%%%
 %TODO find a way to store and load user data from a second file.%%%%%%%%
+
+prop(hallway, type, room).
+prop(hallway, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+prop(hallway, room_in, myhouse).
+prop(master_bedroom, room_in, myhouse).
 prop(master_bedroom, type, bedroom).
 prop(master_bedroom, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(door1, location, ((1,1),(2,2))).
+
+prop(myhouse, type, house).
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%This call checks the area of a non-crossing irregular n-gon, where the last segment connects to the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
+% This call checks the area of a non-crossing irregular n-gon, where the last segment connects to the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
 
-area(R,A) :- segmentLListToListOfCrossProducts(R,L), sumlist(L,S), A is abs(div(S,2)).
+area(R,A) :- segmentListToListOfCrossProducts(R,L), sumlist(L,S), A is abs(div(S,2)).
 
 sumlist([], 0).
 sumlist([H|T], S) :-
-   sumlist(T, Rest),
-   S is H + Rest.
+   sumlist(T, R),
+   S is H + R.
 
-segmentListToListOfCrossProducts([((X1,Y1),(X2,Y2))|T], [P|L]) :- P is (X1*Y2 - Y1*X2), segmentListToListOfProducts(T, L).
+segmentListToListOfCrossProducts([((X1,Y1),(X2,Y2))|T], [P|L]) :- P is (X1*Y2 - Y1*X2), segmentListToListOfCrossProducts(T, L).
 segmentListToListOfCrossProducts([], []).
 
 
