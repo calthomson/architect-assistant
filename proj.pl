@@ -1,4 +1,24 @@
-% line((X1,Y1),(X2,Y2)) returns true if the corners (X1,Y1) and (X2,Y2) form a valid line:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%TODO find a way to store and load user data from a second file.%%%%%%%%
+
+prop(hallway, type, bathroom).
+prop(hallway, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+prop(hallway, room_in, myhouse).
+prop(master_bedroom, room_in, myhouse).
+prop(master_bedroom, type, bedroom).
+prop(master_bedroom, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(win1, location, ((1,1),(2,2))).
+prop(win2, location, ((0,0),(1,1))).
+prop(door1, location, ((2,2),(1,8))).
+prop(door1, location, ((1,1),(2,2))).
+prop(myhouse, type, house).
+% User can also supply extra information if they know which room a window or door is in
+% prop(win1, window_in, master_bedroom).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%% Object Verification %%%%%%%
+
+% line((X1,Y1),(X2,Y2)) is true if the endpoints (X1,Y1) and (X2,Y2) form a valid line:
 % A valid line is one where X1,Y1,X2,Y2 are all numbers and (X1,Y1) and (X2,Y2) are not the same points
 line((X1,Y1),(X2,Y2)) :- number(X1), number(Y1), number(X2), number(Y2),
 	wlength(((X1,Y1),(X2,Y2)), L), L \= 0.0.
@@ -7,9 +27,9 @@ line((X1,Y1),(X2,Y2)) :- number(X1), number(Y1), number(X2), number(Y2),
 % A valid wall is a line.
 wall((X1,Y1),(X2,Y2)) :- line((X1,Y1),(X2,Y2)).
 
-% wlength returns true when L, the length between two points, is equal to the result
-% of the pythagoras theorem
-wlength(((X1,Y1),(X2,Y2)), L) :- L is sqrt((X1-X2)^2 + (Y1-Y2)^2).
+% window(W) is true when W is a valid window that is located in the wall of a room
+valid(W) :- prop(W, location, L), window(L), prop(W, window_in, R).
+window(((X1,Y1),(X2,Y2))) :- line((X1,Y1),(X2,Y2)).
 
 % room(W) returns true when W is a list of walls that forms a valid room R
 % A valid room has 3 or more walls, where each wall is connected to the preceeding wall, and the
@@ -17,6 +37,8 @@ wlength(((X1,Y1),(X2,Y2)), L) :- L is sqrt((X1-X2)^2 + (Y1-Y2)^2).
 room([H,I|T]):- length(T,L), L>0,connectedFirstLast(H,[I|T]), connectedrest([H,I|T]).
 connectedrest([H,I|T]):- connected(H,I), connectedrest([I|T]).
 connectedrest([_]).
+
+%%%%%%% Wall Connectivity Checks %%%%%%%
 
 % connected(W1,W2) returns true when walls W1 and W2 intersect
 % Walls W1 and W2 intersect return true when the second point of W1 and the first point of
@@ -32,40 +54,44 @@ connectedFirstLast(((X1,Y1),_), [((X2,Y2),(X1,Y1))]) :- number(X2), number(Y2), 
 % Loop: Iterate through the list of walls until we reach the last wall so that we may compare it to the first
 connectedFirstLast(F, [_|T]) :- connectedFirstLast(F,T).
 
-%TODO check validity of X against a list of types
-% Get TL which is a list of all T types that X is a member of (ex. master_bedroom is a type of
-bedroom and a type of room). Recursively check that X is a valid member of each of its supertypes.
-valid(X) :- setof(T, prop(X,type, T), TL). %, validListOfTypes(X,TL).
+%%%%%%% Object Validity Checks %%%%%%%
+
+% valid(X) gets the set of all types that the object is claimed to be a type of 
+% (including subtype / supertype relations that we define )
+% And then checks that the object is a valid member of each of those types.
+valid(X) :- setof(T, prop(X,type, T), TL),  validListOfTypes(X,TL).
 % Go through the list of supertypes and check that X is a valid member of each of these.
 % TODO: Most general supertype is defined first in the file so that it is checked first.
-validListOfTypes(X, [H|T]) :- valid(X, type, H), validListofTypes(X, T).
+validListOfTypes(X, [H|T]) :- valid(X, type, H), validListOfTypes(X, T).
+validListOfTypes(X, [H]) :- valid(X, type, H). 
+
+% Valid(X, type, building) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
+valid(X, type, building):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
+valid(X, type, house) :- setof(R, prop(R, room_in, X, RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
+valid(X, type, mansion):- setof(R, prop(R, room_in, RL), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>3 . 
+validRooms([R|RL]) :- valid(R), validRooms(RL).
+validRooms([R]):- valid(R).
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
-valid(X, type, bedroom) :- prop(X, area, A), A < 2000.
-prop(X, type, room) :- prop(X,type, bedroom).
+valid(X,type, bedroom) :- hasdoor(X), haswindow(X).
+
+haswindow(_).
+hasdoor(_).
+
+%%%%%%% Object Properties %%%%%%%
 
 prop(X,area,A):- prop(X,walls, R), area(R,A).
 % TODO: Make sure that the most general supertype is defined first in the file so that it can be checked first.
 prop(X, type, room) :- prop(X,type, bedroom).
-prop(X, type, superroom) :- prop(X, type, room).
+prop(X, type, building):- prop(X, type, house).
 
-%%%%%%% Window Properties %%%%%%%
+%%% Window Properties %%%
 % prop(W, window_in, R) is true when room R contains window W
 prop(W, window_in, R) :- prop(R, walls, WL), prop(W, location, L), find_containing_line_from_list(L, WL).
 
-% window(W) is true when W is a valid window that is located in the wall of a room
-valid(W) :- prop(W, location, L), window(L), prop(W, window_in, R).
-window(((X1,Y1),(X2,Y2))) :- line((X1,Y1),(X2,Y2)).
-
-%%%%%%% User Data %%%%%%%%
-%TODO find a way to store and load user data from a second file.%%%%%%%%
-prop(master_bedroom, type, bedroom).
-prop(master_bedroom, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
-prop(win1, location, ((1,1),(2,2))).
-prop(win2, location, ((0,0),(1,1))).
-prop(door1, location, ((2,2),(1,8))).
-% User can also supply extra information if they know which room a window or door is in
-% prop(win1, window_in, master_bedroom).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Object Property Helpers %%%
+countRoomType(_, [], 0).
+countRoomType(T, [R|RL], C1):- prop(R, type, T), countRoomType(T, RL, C), C1 is C + 1. 
+countRoomType(T, [R|RL], C):- \+ prop(R, type,T), countRoomType(T,RL, C).
 
 %%%%%%% Geometry Helper Queries %%%%%%%
 
@@ -95,14 +121,24 @@ squared_length((X1,Y1), (X2,Y2), SL) :- SL is (X2 - X1)*(X2 - X1) + (Y2 - Y1)*(Y
 
 % This call checks the area of a non-crossing irregular n-gon, where the last segment connects to
 % the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
+
+totalArea([], 0).
+totalArea([R|RL], A):- area(R, A1), totalArea(RL, Rest), A is A1 + Rest. 
+
+% This call checks the area of a non-crossing irregular n-gon, where the last segment connects to the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
+
 area(R,A) :- segmentListToListOfCrossProducts(R,L), sumlist(L,S), A is abs(div(S,2)).
 
 sumlist([], 0).
 sumlist([H|T], S) :-
-   sumlist(T, Rest),
-   S is H + Rest.
+   sumlist(T, R),
+   S is H + R.
 
-segmentListToListOfCrossProducts([((X1,Y1),(X2,Y2))|T], [P|L]) :- P is (X1*Y2 - Y1*X2), segmentListToListOfProducts(T, L).
+segmentListToListOfCrossProducts([((X1,Y1),(X2,Y2))|T], [P|L]) :- P is (X1*Y2 - Y1*X2), segmentListToListOfCrossProducts(T, L).
 segmentListToListOfCrossProducts([], []).
+
+% wlength returns true when L, the length between two points, is equal to the result
+% of the pythagoras theorem
+wlength(((X1,Y1),(X2,Y2)), L) :- L is sqrt((X1-X2)^2 + (Y1-Y2)^2).
 
 
