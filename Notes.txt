@@ -31,3 +31,13 @@ prop(X,area,A):- p(X, type, building), getrooms(X, LR), areafromlist(LR,A)
 [househelper].
 
 ? valid(m_b, type, bedroom).
+
+// Extra thing: not a valid X but could be a valid Y
+// Extra thing: Point out problem
+
+
+% eqn_of_line(X, Y, L) returns true when L is the equation of the line between points X and Y
+% eqn_of_line((X1,Y1),(X2,Y2), L) :- slope((X1,Y1),(X2,Y2), S), L is ((Y1-Y2) = S*(X1-X2)).
+
+% slope(X, Y, S) returns true when S is the slope between points X and Y
+% slope((X1,Y1), (X2, Y2), S) :- S is ((Y2 - Y1) / (X2 - X1));
