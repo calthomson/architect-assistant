@@ -29,37 +29,37 @@ connectedFirstLast(((X1,Y1),_), [((X2,Y2),(X1,Y1))]) :- number(X2), number(Y2), 
 % Loop: Iterate through the list of walls until we reach the last wall so that we may compare it to the first
 connectedFirstLast(F, [_|T]) :- connectedFirstLast(F,T).
 
-
 % Valid(X) gets the set of all types that the object is claimed to be a type of (including subtype / supertype relations that we define )
 % And then checks that the object is a valid member of each of those types.
 valid(X) :- setof(T, prop(X,type, T), TL),  validListOfTypes(X,TL).
 validListOfTypes(X, [H|T]) :- valid(X, type, H), validListOfTypes(X, T).
 validListOfTypes(X, [H]) :- valid(X, type, H). 
 
-% Valid(X, type, house) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
-valid(X, type, house):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
+% Valid(X, type, building) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
+valid(X, type, building):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
+valid(X, type, house) :- setof(R, prop(R, room_in, X, RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
+valid(X, type, mansion):- setof(R, prop(R, room_in, RL), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>3 . 
 validRooms([R|RL]) :- valid(R), validRooms(RL).
 validRooms([R]):- valid(R).
-
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
 valid(X,type, bedroom) :- hasdoor(X), haswindow(X).
 
 haswindow(_).
 hasdoor(_).
-prop(X, type, room) :- prop(X,type, bedroom).
 
- 
+
 prop(X,area,A):- prop(X,walls, R), area(R,A).
 prop(X, type, room) :- prop(X,type, bedroom).
+prop(X, type, building):- prop(X, type, house).
 
-
-
-
+countRoomType(_, [], 0).
+countRoomType(T, [R|RL], C1):- prop(R, type, T), countRoomType(T, RL, C), C1 is C + 1. 
+countRoomType(T, [R|RL], C):- \+ prop(R, type,T), countRoomType(T,RL, C).
 
 %%%%%%% user data %%%%%%%%
 %TODO find a way to store and load user data from a second file.%%%%%%%%
 
-prop(hallway, type, room).
+prop(hallway, type, bathroom).
 prop(hallway, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
 prop(hallway, room_in, myhouse).
 prop(master_bedroom, room_in, myhouse).
@@ -72,6 +72,8 @@ prop(myhouse, type, house).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+totalArea([], 0).
+totalArea([R|RL], A):- area(R, A1), totalArea(RL, Rest), A is A1 + Rest. 
 
 % This call checks the area of a non-crossing irregular n-gon, where the last segment connects to the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
 
