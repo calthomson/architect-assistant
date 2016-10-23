@@ -8,12 +8,10 @@ prop(master_bedroom, room_in, myhouse).
 prop(master_bedroom, type, bedroom).
 prop(master_bedroom, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
 prop(win1, location, ((1,1),(2,2))).
-prop(win2, location, ((0,0),(1,1))).
+prop(win1, type, window).
 prop(door1, location, ((2,2),(1,8))).
-prop(door1, location, ((1,1),(2,2))).
+prop(door1, type, door).
 prop(myhouse, type, house).
-% User can also supply extra information if they know which room a window or door is in
-% prop(win1, window_in, master_bedroom).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%% Object Verification %%%%%%%
@@ -23,13 +21,11 @@ prop(myhouse, type, house).
 line((X1,Y1),(X2,Y2)) :- number(X1), number(Y1), number(X2), number(Y2),
 	wlength(((X1,Y1),(X2,Y2)), L), L \= 0.0.
 
-% wall((X1,Y1),(X2,Y2)) returns true if the corners (X1,Y1) and (X2,Y2) form a valid wall:
-% A valid wall is a line.
+% wall/window/door((X1,Y1),(X2,Y2)) returns true if the corners (X1,Y1) and (X2,Y2) form a valid wall:
+% A valid wall, window or door is a line. These checks are seperated in case we want to add more conditions.
 wall((X1,Y1),(X2,Y2)) :- line((X1,Y1),(X2,Y2)).
-
-% window(W) is true when W is a valid window that is located in the wall of a room
-valid(W) :- prop(W, location, L), window(L), prop(W, window_in, R).
 window(((X1,Y1),(X2,Y2))) :- line((X1,Y1),(X2,Y2)).
+door(((X1,Y1),(X2,Y2))) :- line((X1,Y1),(X2,Y2)).
 
 % room(W) returns true when W is a list of walls that forms a valid room R
 % A valid room has 3 or more walls, where each wall is connected to the preceeding wall, and the
@@ -67,26 +63,35 @@ validListOfTypes(X, [H]) :- valid(X, type, H).
 
 % Valid(X, type, building) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
 valid(X, type, building):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
-valid(X, type, house) :- setof(R, prop(R, room_in, X, RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
+valid(X, type, house) :- setof(R, prop(R, room_in, X), RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
 valid(X, type, mansion):- setof(R, prop(R, room_in, RL), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>3 . 
 validRooms([R|RL]) :- valid(R), validRooms(RL).
 validRooms([R]):- valid(R).
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
-valid(X,type, bedroom) :- hasdoor(X), haswindow(X).
+valid(X, type, bedroom) :- prop(W, window_in, X), prop(D, door_in, X).
+valid(X, type, bathroom).
 
-haswindow(_).
-hasdoor(_).
+% valid(X, type, Y) is true when X is a valid member of type Y
+% W is a valid window that is located in the wall of a room R
+valid(X, type, window) :- prop(W, location, L), window(L), prop(W, window_in, R).
+% D is a valid door that is located in the wall of a room R
+valid(X, type, door) :- prop(D, location, L), door(L), prop(D, door_in, R).
 
 %%%%%%% Object Properties %%%%%%%
 
 prop(X,area,A):- prop(X,walls, R), area(R,A).
 % TODO: Make sure that the most general supertype is defined first in the file so that it can be checked first.
+
 prop(X, type, room) :- prop(X,type, bedroom).
 prop(X, type, building):- prop(X, type, house).
 
-%%% Window Properties %%%
+%%% Window %%%
 % prop(W, window_in, R) is true when room R contains window W
 prop(W, window_in, R) :- prop(R, walls, WL), prop(W, location, L), find_containing_line_from_list(L, WL).
+
+%%% Door %%%
+% prop(W, door_in, R) is true when room R contains door D
+prop(W, door_in, R) :- prop(R, walls, WL), prop(D, location, L), find_containing_line_from_list(L, WL).
 
 %%% Object Property Helpers %%%
 countRoomType(_, [], 0).
@@ -123,7 +128,7 @@ squared_length((X1,Y1), (X2,Y2), SL) :- SL is (X2 - X1)*(X2 - X1) + (Y2 - Y1)*(Y
 % the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
 
 totalArea([], 0).
-totalArea([R|RL], A):- area(R, A1), totalArea(RL, Rest), A is A1 + Rest. 
+totalArea([R|RL], A):- prop(R, walls, W), area(W, A1), totalArea(RL, Rest), A is A1 + Rest. 
 
 % This call checks the area of a non-crossing irregular n-gon, where the last segment connects to the first. This can be assumed because all rooms are checked for connectedness elsewhere. 
 
