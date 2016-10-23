@@ -1,9 +1,29 @@
+%%%%%%%%%%%%%%%%%%%%% KNOWN BUGS %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+1. When checking that the house is valid, we use windows/doors in the walls of the houes
+to make sure that rooms are valid, but we never check that every window and door defined
+in the user data as belonging to that house is actually in a wall of the houes To do this
+we need to add another check in valid(house) to make sure that prop(X, belong_to, house)
+is in a location that makes sense. We didn't do this because we are assuming that the 
+architect has put all the windows and doors in the locations that he/she wants (and a good
+designer would hopefully not put a window in the middle of nowhere) and that the placements
+of these things fulfills the requirements of the room and house types they specified. 
+
+Ex. An architect would not put a window in the middle of nowhere, however they might
+forget to put a window in a bedroom, which is a necessary criteria for a room to be a bedroom.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 [(master_bedroom, type, room),
  (master_bedroom, walls, [((1,1),(2,2)),((2,2),(3,3)),((3,3),(1,1))])])
 
 // USER INPUT / DATA
  prop(master_bedroom, type, bedroom).
  prop(master_bedroom, walls, [((1,1),(2,2)),()()()]).
+
+ !!!!!!!!!!!!!!!!!!!!!!!!
+% User can also supply extra information if they know which room a window or door is in
+% prop(win1, window_in, master_bedroom).
 
 //////////////////////////
 valid(X) :- prop(X,type, Y), valid(X, Y).
@@ -31,3 +51,13 @@ prop(X,area,A):- p(X, type, building), getrooms(X, LR), areafromlist(LR,A)
 [househelper].
 
 ? valid(m_b, type, bedroom).
+
+// Extra thing: not a valid X but could be a valid Y
+// Extra thing: Point out problem
+
+
+% eqn_of_line(X, Y, L) returns true when L is the equation of the line between points X and Y
+% eqn_of_line((X1,Y1),(X2,Y2), L) :- slope((X1,Y1),(X2,Y2), S), L is ((Y1-Y2) = S*(X1-X2)).
+
+% slope(X, Y, S) returns true when S is the slope between points X and Y
+% slope((X1,Y1), (X2, Y2), S) :- S is ((Y2 - Y1) / (X2 - X1));
