@@ -1,17 +1,76 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TODO find a way to store and load user data from a second file.%%%%%%%%
 
-prop(hallway, type, bathroom).
-prop(hallway, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
-prop(hallway, room_in, myhouse).
-prop(master_bedroom, room_in, myhouse).
-prop(master_bedroom, type, bedroom).
-prop(master_bedroom, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
-prop(win1, location, ((1,1),(2,2))).
-prop(win1, type, window).
-prop(door1, location, ((2,2),(1,8))).
-prop(door1, type, door).
-prop(myhouse, type, house).
+%%% Valid 1 Story House: h1 %%%
+prop(h1, type, house).
+single_story(h1).
+prop(master_bedroom_h1, room_in, h1).
+prop(master_bedroom_h1, type, bedroom).
+prop(master_bedroom_h1, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(bathroom_h1, room_in, h1).
+prop(bathroom_h1, type, bathroom).
+prop(bathroom_h1, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+% TODO: Make sure that window and door belongs to same house as room DONE
+prop(win1_h1, in_house, h1).
+prop(win1_h1, type, window).
+prop(win1_h1, location, ((1,1),(2,2))).
+prop(door1_h1, in_house, h1).
+prop(door1_h1, type, door).
+prop(door1_h1, location, ((2,2),(1,8))).
+
+%%% Valid 3 Story House: h2 %%%
+prop(h2, type, house).
+prop(f1, floor_in, h2).
+prop(f2, floor_in, h2).
+prop(f3, floor_in, h2).
+prop(living_room_h2, room_in, h2).
+prop(living_room_h2, type, room).
+prop(living_room_h2, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(living_room, on_floor, f1).
+prop(bathroom_h2, room_in, h2).
+prop(bathroom_h2, type, bathroom).
+prop(bathroom_h2, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+prop(bathroom_h2, on_floor, f2).
+prop(bedroom_h2, room_in, h1).
+prop(bedroom_h2, type, bedroom).
+prop(bedroom_h2, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(bedroom_h2, on_floor, f3).
+% TODO: Assign windows and doors to floors, make sure to check in that room shares same
+% floor with window and door
+% TODO: Make sure that window and door belongs to same house as room DONE
+prop(win1_h2, in_house, h2).
+prop(win1_h2, on_floor, f3).
+prop(win1_h2, type, window).
+prop(win1_h2, location, ((1,1),(2,2))).
+prop(door1_h2, in_house, h2).
+prop(door1_h2, on_floor, f3).
+prop(door1_h2, type, door).
+prop(door1_h2, location, ((2,2),(1,8))).
+
+%%% Invalid House: inv_h1 %%%
+%%% Bedroom has no door %%%
+prop(inv_h1, type, house).
+prop(bedroom_inv_h1, room_in, inv_h1).
+prop(bedroom_inv_h1, type, bedroom).
+prop(bedroom_inv_h1, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
+prop(win1_inv_h1, in_house, inv_h1).
+prop(win1_inv_h1, location, ((1,1),(2,2))).
+prop(win1_inv_h1, type, window).
+
+%%% Valid Mansion: m1 %%%
+% TODO: Add number of floor checks for mansions
+% TODO: Fill this out
+
+%%% Invalid Mansion: inv_m1 %%%
+% TODO: Fill this out
+
+%%% Valid Industrial Building: i1 %%%
+% TODO: Add mansion criteria
+% TODO: Fill this out
+
+%%% Invalid Industrial Building: inv_i1 %%%
+% TODO: Fill this out
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%% Object Verification %%%%%%%
@@ -56,26 +115,34 @@ connectedFirstLast(F, [_|T]) :- connectedFirstLast(F,T).
 % (including subtype / supertype relations that we define )
 % And then checks that the object is a valid member of each of those types.
 valid(X) :- setof(T, prop(X,type, T), TL),  validListOfTypes(X,TL).
-% Go through the list of supertypes and check that X is a valid member of each of these.
+
+% validListOfTypes(X, [H|T]) goes through the list of supertypes and checks that 
+% X is a valid member of each of these.
 % TODO: Most general supertype is defined first in the file so that it is checked first.
 validListOfTypes(X, [H|T]) :- valid(X, type, H), validListOfTypes(X, T).
 validListOfTypes(X, [H]) :- valid(X, type, H). 
 
-% Valid(X, type, building) finds all rooms claimed to be in the house and then checks that the rooms are valid.  
+% valid(X, type, building) finds all rooms in the house and checks that these rooms are valid.
+valid(X, type, building):- setof(F, prop(F, floor_in, X), FL), validFloors(FL).   
 valid(X, type, building):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
 valid(X, type, house) :- setof(R, prop(R, room_in, X), RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
 valid(X, type, mansion):- setof(R, prop(R, room_in, RL), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>3 . 
-validRooms([R|RL]) :- valid(R), validRooms(RL).
-validRooms([R]):- valid(R).
+
+% valid(X, type, Y) returns true when X is a valid member of type Y
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
 valid(X, type, bedroom) :- prop(W, window_in, X), prop(D, door_in, X).
 valid(X, type, bathroom).
-
-% valid(X, type, Y) is true when X is a valid member of type Y
-% W is a valid window that is located in the wall of a room R
 valid(X, type, window) :- prop(W, location, L), window(L), prop(W, window_in, R).
-% D is a valid door that is located in the wall of a room R
 valid(X, type, door) :- prop(D, location, L), door(L), prop(D, door_in, R).
+valid(X, type, floor) :- setof(R, prop(R, room_in, X), RL), validRooms(RL).
+
+% validFloors([F|FL]) goes through the list of floors [F|FL] and checks that each floor is valid
+validFloors([F|FL]) :- valid(F), validFloors(FL).
+validFloors([F]):- valid(F).
+
+% validRooms([R|RL]) goes through the list of rooms [R|RL] and checks that each room is valid
+validRooms([R|RL]) :- valid(R), validRooms(RL).
+validRooms([R]):- valid(R).
 
 %%%%%%% Object Properties %%%%%%%
 
@@ -85,15 +152,40 @@ prop(X,area,A):- prop(X,walls, R), area(R,A).
 prop(X, type, room) :- prop(X,type, bedroom).
 prop(X, type, building):- prop(X, type, house).
 
+prop(R, on_floor, F)
+
 %%% Window %%%
 % prop(W, window_in, R) is true when room R contains window W
-prop(W, window_in, R) :- prop(R, walls, WL), prop(W, location, L), find_containing_line_from_list(L, WL).
+% TODO: Check that window is in the same house as the room
+% TODO: Check that the window is on the same floor as the room
+prop(W, window_in, R) :-
+	prop(R, walls, WL),
+	prop(W, type, window),
+	prop(W, location, L),
+	find_containing_line_from_list(L, WL),
+	prop(R, room_in, H),
+	prop(W, in_house, H),
+	check_floor(R, W).
 
 %%% Door %%%
 % prop(W, door_in, R) is true when room R contains door D
-prop(W, door_in, R) :- prop(R, walls, WL), prop(D, location, L), find_containing_line_from_list(L, WL).
+% TODO: Check that door is in the same house as the room
+% TODO: Check that the door is on the same floor as the room
+prop(D, door_in, R) :-
+	prop(R, walls, WL),
+	prop(D, type, door),
+	prop(D, location, L),
+	find_containing_line_from_list(L, WL),
+	prop(R, room_in, H),
+	prop(D, in_house, H),
+	check_floor(R, D).
 
 %%% Object Property Helpers %%%
+
+% check_floor(R, O) returns true when object O is on the same floor as room R
+check_floor(R, W) :- prop(R, room_in, H), single_story(H).
+check_floor(R, W) :- prop(R, on_floor, F), prop(W, on_floor, F).
+
 countRoomType(_, [], 0).
 countRoomType(T, [R|RL], C1):- prop(R, type, T), countRoomType(T, RL, C), C1 is C + 1. 
 countRoomType(T, [R|RL], C):- \+ prop(R, type,T), countRoomType(T,RL, C).
