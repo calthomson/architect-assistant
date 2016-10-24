@@ -1,5 +1,4 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User Data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%TODO find a way to store and load user data from a second file.%%%%%%%%
 
 %%% Valid 1 Story House: h1 %%%
 prop(h1, type, house).
@@ -10,7 +9,6 @@ prop(master_bedroom_h1, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,
 prop(bathroom_h1, room_in, h1).
 prop(bathroom_h1, type, bathroom).
 prop(bathroom_h1, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
-% TODO: Make sure that window and door belongs to same house as room DONE
 prop(win1_h1, in_house, h1).
 prop(win1_h1, type, window).
 prop(win1_h1, location, ((1,1),(2,2))).
@@ -35,9 +33,6 @@ prop(bedroom_h2, room_in, h1).
 prop(bedroom_h2, type, bedroom).
 prop(bedroom_h2, walls, [((1,1),(2,2)),((2,2),(1,8)), ((1,8),(7,4)), ((7,4),(1,1))]).
 prop(bedroom_h2, on_floor, f3).
-% TODO: Assign windows and doors to floors, make sure to check in that room shares same
-% floor with window and door
-% TODO: Make sure that window and door belongs to same house as room DONE
 prop(win1_h2, in_house, h2).
 prop(win1_h2, on_floor, f3).
 prop(win1_h2, type, window).
@@ -61,8 +56,6 @@ prop(win1_inv_h1, location, ((1,1),(2,2))).
 prop(win1_inv_h1, type, window).
 
 %%% Valid Mansion: m1 %%%
-% TODO: Add number of floor checks for mansions
-% TODO: Fill this out
 prop(m1, type, mansion).
 single_story(m1).
 prop(bedroom1_m1, room_in, m1).
@@ -71,9 +64,15 @@ prop(bedroom1_m1, walls, [((1,1),(2,2)),((2,2),(1000,80)), ((1000,80),(7,4)), ((
 prop(bathroom1_m1, room_in, m1).
 prop(bathroom1_m1, type, bathroom).
 prop(bathroom1_m1, walls, [((1,8), (7,4)), ((7,4),(7,5000)), ((7,5000),(1,9)), ((1,9),(1,8))]).
-prop(kitchen_m1, room_in, m1).
-prop(kitchen_m1, type, room).
-prop(kitchen_m1, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+prop(bathroom2_m1, room_in, m1).
+prop(bathroom2_m1, type, bathroom).
+prop(bathroom2_m1, walls, [((1,8), (7,4)), ((7,4),(7,5000)), ((7,5000),(1,9)), ((1,9),(1,8))]).
+prop(bathroom3_m1, room_in, m1).
+prop(bathroom3_m1, type, bathroom).
+prop(bathroom3_m1, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
+prop(bathroom4_m1, room_in, m1).
+prop(bathroom4_m1, type, bathroom).
+prop(bathroom4_m1, walls, [((1,8), (7,4)), ((7,4),(7,5)), ((7,5),(1,9)), ((1,9),(1,8))]).
 prop(win1_m1, in_house, m1).
 prop(win1_m1, type, window).
 prop(win1_m1, location, ((1,1),(2,2))).
@@ -82,14 +81,23 @@ prop(door1_m1, type, door).
 prop(door1_m1, location, ((2,2),(1,8))).
 
 %%% Invalid Mansion: inv_m1 %%%
-% TODO: Fill this out
-
-%%% Valid Industrial Building: i1 %%%
-% TODO: Add mansion criteria
-% TODO: Fill this out
-
-%%% Invalid Industrial Building: inv_i1 %%%
-% TODO: Fill this out
+%%% Less than 4 bathrooms %%%
+prop(m1, type, mansion).
+single_story(m1).
+prop(bedroom1_m1, room_in, m1).
+prop(bedroom1_m1, type, bedroom).
+prop(bedroom1_m1, walls, [((1,1),(2,2)),((2,2),(1000,80)), ((1000,80),(7,4)), ((7,4),(1,1))]).
+prop(bathroom1_m1, room_in, m1).
+prop(bathroom1_m1, type, bathroom).
+prop(bathroom1_m1, walls, [((1,8), (7,4)), ((7,4),(7,5000)), ((7,5000),(1,9)), ((1,9),(1,8))]).
+prop(bathroom2_m1, room_in, m1).
+prop(bathroom2_m1, type, bathroom).
+prop(win1_m1, in_house, m1).
+prop(win1_m1, type, window).
+prop(win1_m1, location, ((1,1),(2,2))).
+prop(door1_m1, in_house, m1).
+prop(door1_m1, type, door).
+prop(door1_m1, location, ((2,2),(1,8))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -138,7 +146,7 @@ valid(X) :- setof(T, prop(X,type, T), TL),  validListOfTypes(X,TL).
 
 % validListOfTypes(X, [H|T]) goes through the list of supertypes and checks that 
 % X is a valid member of each of these.
-% TODO: Most general supertype is defined first in the file so that it is checked first.
+% Most general supertype is defined first in the file so that it is checked first.
 validListOfTypes(X, [H|T]) :- valid(X, type, H), validListOfTypes(X, T).
 validListOfTypes(X, [H]) :- valid(X, type, H). 
 
@@ -146,7 +154,7 @@ validListOfTypes(X, [H]) :- valid(X, type, H).
 valid(X, type, building):- setof(F, prop(F, floor_in, X), FL), validFloors(FL).   
 valid(X, type, building):- setof(R, prop(R, room_in, X), RL), validRooms(RL). 
 valid(X, type, house) :- setof(R, prop(R, room_in, X), RL), totalArea(RL, A), A<3000, countRoomType(bathroom, RL, C), C>0 . 
-valid(X, type, mansion):- setof(R, prop(R, room_in, X), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>0 . 
+valid(X, type, mansion):- setof(R, prop(R, room_in, X), RL), totalArea(RL, A), A>3000, countRoomType(bathroom, RL, C), C>3 . 
 
 % valid(X, type, Y) returns true when X is a valid member of type Y
 valid(X, type, room) :- prop(X, walls, R), room(R), area(R,A), A>0.
@@ -167,7 +175,6 @@ validRooms([R]):- valid(R).
 %%%%%%% Object Properties %%%%%%%
 
 prop(X,area,A):- prop(X,walls, R), area(R,A).
-% TODO: Make sure that the most general supertype is defined first in the file so that it can be checked first.
 
 prop(X, type, room) :- prop(X,type, bedroom).
 prop(X, type, building):- prop(X, type, house).
@@ -175,8 +182,6 @@ prop(X, type, building):- prop(X, type, house).
 %%% Door & Window In Property %%%
 % prop(W, door_in, R) and prop(D, window_in, R) are true when room R contains door D or window W
 % The door and window must be on the same floor as room R and in the same houes as room R
-% TODO: Check that door is in the same house as the room
-% TODO: Check that the door is on the same floor as the room
 prop(D, door_in, R) :-
 	prop(D, type, door),
 	get_containing_room(D, R).
