@@ -172,8 +172,6 @@ prop(X,area,A):- prop(X,walls, R), area(R,A).
 prop(X, type, room) :- prop(X,type, bedroom).
 prop(X, type, building):- prop(X, type, house).
 
-prop(R, on_floor, F)
-
 %%% Door & Window In Property %%%
 % prop(W, door_in, R) and prop(D, window_in, R) are true when room R contains door D or window W
 % The door and window must be on the same floor as room R and in the same houes as room R
