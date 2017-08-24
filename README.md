@@ -1,4 +1,4 @@
-Authors: Callum Campbell (i2t8, 12881124), Gulipek Candan (d4c9, 53906137), & Caledonia Thomson (b9b9, 17711136)
+Prolog program by Authors: Callum Campbell (i2t8, 12881124), Gulipek Candan (d4c9, 53906137), & Caledonia Thomson (b9b9, 17711136)
 
 // What is the problem? //
 
